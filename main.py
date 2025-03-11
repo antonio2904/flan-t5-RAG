@@ -29,9 +29,9 @@ def retrieve(query, top_n=1):
     return [doc for _, doc in top_docs]
 
 # Load FLAN-T5 Base model and tokenizer
-model_name = "google/flan-t5-base"
+model_name = "google/flan-t5-xl"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map="cpu")  # Force CPU execution
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name, torch_dtype=torch.bfloat16).to("cuda")
 
 def generate_answer(query):
     """Retrieve relevant context and generate an answer."""
@@ -40,19 +40,10 @@ def generate_answer(query):
 
     # Format input for FLAN-T5
     input_text = f"Context: {context} \nQuestion: {query}"
-    input_ids = tokenizer(input_text, return_tensors="pt", truncation=True, padding=True).input_ids
+    input_ids = tokenizer(input_text, return_tensors="pt").input_ids.to("cuda")
 
     # Generate answer
-    outputs = outputs = model.generate(
-    	input_ids,
-    	max_length=20,  # Increase output length
-    	min_length=5,   # Ensure a reasonable response length
-    	temperature=0.5,  # Introduce variation in responses (lower = more deterministic)
-    	top_p=0.9,       # Use nucleus sampling for diversity
-    	num_return_sequences=1,  # Return a single best response
-    	repetition_penalty=1.5,  # Reduce repetition
-    	do_sample=True
-    )
+    outputs = outputs = model.generate(input_ids, max_length=50)
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
 st.header("Flan T5")
