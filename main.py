@@ -43,7 +43,7 @@ def generate_answer(query):
     input_ids = tokenizer(input_text, return_tensors="pt").input_ids.to("cuda")
 
     # Generate answer
-    outputs = outputs = model.generate(input_ids, max_length=50)
+    outputs = outputs = model.generate(input_ids, max_length=50, temperature=0.7, top_p=0.8, repetition_penalty=1.5)
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
 st.header("Flan T5")
